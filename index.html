@@ -1,1 +1,224 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f3ee">
+  <title>AM 02:17 — A PLACE TO BE HEARD</title>
+  <style>
+    :root {
+      --bg: #f5f3ee;
+      --surface: #ebe8e0;
+      --text: #252522;
+      --muted: #89877f;
+      --line: #dedbd3;
+      --accent: #b58a51;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, "Noto Sans KR", sans-serif;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    body.dark {
+      --bg: #171816;
+      --surface: #22231f;
+      --text: #eeece5;
+      --muted: #929087;
+      --line: #34352f;
+      --accent: #c39a60;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 42px 7%;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: 2px;
+    }
+
+    .tagline {
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 2px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 760px;
+      margin: auto;
+      padding: 100px 0;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 11px;
+      letter-spacing: 3px;
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: clamp(34px, 6vw, 58px);
+      font-weight: 400;
+      letter-spacing: -2px;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .description {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 2;
+      margin-bottom: 60px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .status.open .dot {
+      background: #719b76;
+    }
+
+    .status.open .status-text {
+      color: var(--text);
+    }
+
+    .apply-button {
+      width: 100%;
+      margin-top: 24px;
+      padding: 20px;
+      border: 1px solid var(--text);
+      background: var(--text);
+      color: var(--bg);
+      font-size: 13px;
+      letter-spacing: 1px;
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .notice {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.8;
+      text-align: center;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 600px) {
+      .page {
+        padding: 28px 24px;
+      }
+
+      .tagline {
+        font-size: 8px;
+      }
+
+      main {
+        padding: 90px 0;
+      }
+
+      footer {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header>
+      <div class="logo">AM 02:17</div>
+      <div class="tagline">A PLACE TO BE HEARD</div>
+    </header>
+
+    <main>
+      <div class="eyebrow">ANONYMOUS LISTENING SPACE</div>
+
+      <h1>아직 잠들지 못했다면,</h1>
+
+      <p class="description">
+        오늘 있었던 일을 들려주세요.<br>
+        누구에게도 쉽게 꺼내지 못했던 이야기라도 괜찮습니다.
+      </p>
+
+      <div class="status" id="status">
+        <span class="dot"></span>
+        <span class="status-text" id="statusText">
+          현재 상담 모집이 종료되었습니다.
+        </span>
+      </div>
+
+      <button class="apply-button" id="applyButton" disabled>
+        상담 신청은 현재 준비 중입니다
+      </button>
+
+      <p class="notice">
+        AM 02:17은 전문 심리상담 기관이 아닌<br>
+        개인이 운영하는 익명 고민 나눔 공간입니다.
+      </p>
+    </main>
+
+    <footer>
+      <span>AM 02:17 © 2026</span>
+      <span>TAKE YOUR TIME. WE ARE LISTENING.</span>
+    </footer>
+  </div>
+
+  <script>
+    function updateTheme() {
+      const hour = new Date().getHours();
+      const isNight = hour >= 19 || hour < 7;
+      document.body.classList.toggle("dark", isNight);
+    }
+
+    updateTheme();
+    setInterval(updateTheme, 60000);
+  </script>
+</body>
+</html>

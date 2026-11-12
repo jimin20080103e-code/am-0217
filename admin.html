@@ -84,7 +84,9 @@ h1 {font-size:32px;font-weight:400;margin-bottom:10px}
 .dot {
   width:7px;height:7px;border-radius:50%;
   background:var(--muted);
+  flex-shrink:0;
 }
+.dot.open {background:#72966b}
 .actions {display:flex;gap:9px;flex-wrap:wrap}
 button {
   padding:12px 17px;
@@ -92,15 +94,18 @@ button {
   background:transparent;
   color:var(--text);
   font-size:11px;
-  cursor:not-allowed;
-  opacity:.65;
+  cursor:pointer;
+  opacity:1;
 }
 button.primary {
   background:var(--text);
   color:var(--bg);
   border-color:var(--text);
 }
-button:disabled {cursor:not-allowed}
+button:disabled {
+  cursor:not-allowed;
+  opacity:.45;
+}
 .notice {
   padding:15px;
   background:var(--panel);
@@ -118,6 +123,8 @@ button:disabled {cursor:not-allowed}
 .queue-item {
   display:flex;
   justify-content:space-between;
+  align-items:center;
+  gap:15px;
   padding:16px 0;
   border-bottom:1px solid var(--line);
   font-size:12px;
@@ -129,51 +136,130 @@ footer {
   font-size:10px;
   letter-spacing:1px;
 }
+#loginPanel {
+  max-width:420px;
+  margin:75px auto;
+}
+#loginPanel label {
+  display:block;
+  font-size:12px;
+  margin:22px 0 10px;
+}
+#loginPanel input {
+  width:100%;
+  padding:15px;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--text);
+  outline:none;
+  font-size:13px;
+}
+#loginPanel input:focus {border-color:var(--accent)}
+#loginButton {
+  width:100%;
+  margin-top:25px;
+  padding:16px;
+}
+#loginMessage,#adminMessage {
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.8;
+  margin-top:15px;
+  white-space:pre-wrap;
+}
+#dashboard {display:none}
+#logoutButton {font-size:10px}
 @media(max-width:650px) {
   .page {padding:25px 20px}
   .stats {grid-template-columns:1fr}
   .status-row {align-items:flex-start;flex-direction:column}
   h1 {font-size:27px}
+  header {gap:12px}
 }
 </style>
 </head>
+
 <body>
 <div class="page">
+
 <header>
   <div class="logo">AM 02:17</div>
   <div class="tag">ADMINISTRATION</div>
 </header>
 
-<main>
+<section id="loginPanel">
   <div class="eyebrow">PRIVATE MANAGEMENT</div>
-  <h1>운영자 대시보드</h1>
-  <p class="subtitle">AM 02:17 상담 관리 시스템</p>
+  <h1>운영자 로그인</h1>
+  <p class="subtitle">관리자 계정으로 로그인해 주세요.</p>
+
+  <form id="loginForm">
+    <label for="email">이메일</label>
+    <input
+      id="email"
+      type="email"
+      autocomplete="username"
+      required
+      placeholder="운영자 이메일"
+    >
+
+    <label for="password">비밀번호</label>
+    <input
+      id="password"
+      type="password"
+      autocomplete="current-password"
+      required
+      placeholder="비밀번호"
+    >
+
+    <button class="primary" id="loginButton" type="submit">
+      로그인
+    </button>
+  </form>
+
+  <p id="loginMessage"></p>
+</section>
+
+<main id="dashboard">
+  <div class="status-row">
+    <div>
+      <div class="eyebrow">PRIVATE MANAGEMENT</div>
+      <h1>운영자 대시보드</h1>
+      <p class="subtitle">AM 02:17 상담 관리 시스템</p>
+    </div>
+    <button id="logoutButton" type="button">로그아웃</button>
+  </div>
 
   <div class="stats">
     <div class="card">
       <div class="card-label">완료된 상담</div>
-      <div class="card-value">NO.000</div>
+      <div class="card-value" id="completedCount">NO.000</div>
     </div>
     <div class="card">
       <div class="card-label">현재 대기자</div>
-      <div class="card-value">0명</div>
+      <div class="card-value" id="queueCount">0명</div>
     </div>
     <div class="card">
       <div class="card-label">보관된 상담</div>
-      <div class="card-value">0 / 2</div>
+      <div class="card-value">연결 전 / 2</div>
     </div>
   </div>
 
   <section class="section">
     <div class="section-title">01 / 상담 모집 관리</div>
+
     <div class="status-row">
       <div class="status">
-        <span class="dot"></span>
-        상담 모집 종료
+        <span class="dot" id="recruitDot"></span>
+        <span id="recruitStatus">모집 상태 확인 중</span>
       </div>
+
       <div class="actions">
-        <button class="primary" disabled>상담 모집 시작</button>
-        <button disabled>모집 종료</button>
+        <button class="primary" id="openButton" type="button" disabled>
+          상담 모집 시작
+        </button>
+        <button id="closeButton" type="button" disabled>
+          모집 종료
+        </button>
       </div>
     </div>
   </section>
@@ -181,47 +267,324 @@ footer {
   <section class="section">
     <div class="section-title">02 / 현재 상담</div>
     <div class="notice">
-      현재 진행 중인 상담이 없습니다.
-    </div>
-    <div class="actions" style="margin-top:15px">
-      <button disabled>상담 완료</button>
-      <button disabled>이용자 내보내기</button>
-      <button disabled>상담 일시정지</button>
+      현재 상담 기능은 아직 연결되지 않았습니다.
     </div>
   </section>
 
   <section class="section">
     <div class="section-title">03 / 상담 대기열</div>
-    <div class="empty">현재 대기자가 없습니다.</div>
+    <div id="queueList">
+      <div class="empty">대기열을 불러오는 중입니다.</div>
+    </div>
   </section>
 
   <section class="section">
     <div class="section-title">04 / 보관된 상담</div>
-    <div class="empty">보관된 상담이 없습니다.</div>
+    <div class="empty">보관 상담 기능은 아직 연결되지 않았습니다.</div>
   </section>
 
   <section class="section">
     <div class="section-title">05 / 상담 관리 안내</div>
     <div class="notice">
-      · 상담 완료 버튼을 눌러야 완료 건수가 증가합니다.<br>
-      · 완료된 상담의 채팅 기록은 삭제됩니다.<br>
-      · 보관된 상담은 최대 2건까지 유지됩니다.<br>
-      · 보관 상담은 진행 중인 상담 종료 후 순서대로 재개됩니다.<br>
-      · 관리자 인증 및 실제 데이터 연결은 Firebase 설정 단계에서 구현합니다.
+      · 모집 시작 및 종료 상태는 실시간으로 반영됩니다.<br>
+      · 대기자는 신청 순서대로 표시됩니다.<br>
+      · 완료 상담 수는 Firebase 카운터를 기준으로 표시됩니다.<br>
+      · 상담 시작, 완료, 보관 및 내보내기는 다음 단계에서 연결합니다.
     </div>
   </section>
+
+  <p id="adminMessage"></p>
 
   <footer>AM 02:17 © 2026 — ADMIN ONLY</footer>
 </main>
 </div>
 
-<script>
+<script type="module">
+import {
+  auth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "./firebase.js";
+
+import {
+  db
+} from "./firebase.js";
+
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  serverTimestamp,
+  onSnapshot,
+  collection,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+const ADMIN_UID = "gRKERgw7rrSOyWgraMlBH45uGXq2";
+
+const loginPanel = document.getElementById("loginPanel");
+const dashboard = document.getElementById("dashboard");
+const loginForm = document.getElementById("loginForm");
+const loginButton = document.getElementById("loginButton");
+const loginMessage = document.getElementById("loginMessage");
+const adminMessage = document.getElementById("adminMessage");
+
+const openButton = document.getElementById("openButton");
+const closeButton = document.getElementById("closeButton");
+const logoutButton = document.getElementById("logoutButton");
+
+let isAdmin = false;
+let accepting = false;
+let unsubscribeSettings = null;
+let unsubscribeCounter = null;
+let unsubscribeQueue = null;
+
+function showMessage(message) {
+  adminMessage.textContent = message;
+}
+
+function stopListeners() {
+  if (unsubscribeSettings) unsubscribeSettings();
+  if (unsubscribeCounter) unsubscribeCounter();
+  if (unsubscribeQueue) unsubscribeQueue();
+
+  unsubscribeSettings = null;
+  unsubscribeCounter = null;
+  unsubscribeQueue = null;
+}
+
+function setRecruitmentUI(value) {
+  accepting = value;
+
+  document.getElementById("recruitStatus").textContent =
+    value ? "상담 모집 진행 중" : "상담 모집 종료";
+
+  document.getElementById("recruitDot").classList.toggle("open", value);
+
+  openButton.disabled = !isAdmin || value;
+  closeButton.disabled = !isAdmin || !value;
+}
+
+function formatTime(timestamp) {
+  if (!timestamp || !timestamp.toDate) {
+    return "접수 시간 확인 중";
+  }
+
+  return timestamp.toDate().toLocaleString("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function renderQueue(snapshot) {
+  const queueList = document.getElementById("queueList");
+  const queueCount = document.getElementById("queueCount");
+
+  queueCount.textContent = snapshot.size + "명";
+  queueList.replaceChildren();
+
+  if (snapshot.empty) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "현재 대기자가 없습니다.";
+    queueList.appendChild(empty);
+    return;
+  }
+
+  snapshot.forEach((item, index) => {
+    const data = item.data();
+
+    const row = document.createElement("div");
+    row.className = "queue-item";
+
+    const left = document.createElement("span");
+    left.textContent =
+      String(index + 1).padStart(2, "0") +
+      " / " +
+      (data.nickname || "닉네임 없음");
+
+    const right = document.createElement("span");
+    right.textContent = formatTime(data.createdAt);
+
+    row.append(left, right);
+    queueList.appendChild(row);
+  });
+}
+
+function startDashboardListeners() {
+  stopListeners();
+
+  // 모집 상태 실시간 감시
+  unsubscribeSettings = onSnapshot(
+    doc(db, "settings", "main"),
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        showMessage("모집 설정 문서를 찾을 수 없습니다.");
+        return;
+      }
+
+      setRecruitmentUI(snapshot.data().accepting === true);
+    },
+    (error) => {
+      console.error(error);
+      showMessage("모집 상태를 불러오지 못했습니다: " + error.message);
+    }
+  );
+
+  // 완료 상담 수 실시간 감시
+  unsubscribeCounter = onSnapshot(
+    doc(db, "counters", "main"),
+    (snapshot) => {
+      const count = snapshot.exists()
+        ? Number(snapshot.data().completedCount || 0)
+        : 0;
+
+      document.getElementById("completedCount").textContent =
+        "NO." + String(count).padStart(3, "0");
+    },
+    (error) => {
+      console.error(error);
+      showMessage("상담 카운터를 불러오지 못했습니다.");
+    }
+  );
+
+  // 대기열 실시간 감시
+  const queueQuery = query(
+    collection(db, "queue"),
+    orderBy("createdAt", "asc")
+  );
+
+  unsubscribeQueue = onSnapshot(
+    queueQuery,
+    renderQueue,
+    (error) => {
+      console.error(error);
+      showMessage("대기열을 불러오지 못했습니다: " + error.message);
+    }
+  );
+}
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  loginButton.disabled = true;
+  loginButton.textContent = "로그인 중...";
+  loginMessage.textContent = "";
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  try {
+    const credential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    if (credential.user.uid !== ADMIN_UID) {
+      await signOut(auth);
+      throw new Error("운영자 계정이 아닙니다.");
+    }
+
+  } catch (error) {
+    console.error(error);
+    loginMessage.textContent =
+      error.message === "운영자 계정이 아닙니다."
+        ? error.message
+        : "로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.";
+
+    loginButton.disabled = false;
+    loginButton.textContent = "로그인";
+  }
+});
+
+onAuthStateChanged(auth, async (user) => {
+  stopListeners();
+  isAdmin = false;
+
+  if (!user) {
+    loginPanel.style.display = "block";
+    dashboard.style.display = "none";
+    loginButton.disabled = false;
+    loginButton.textContent = "로그인";
+    return;
+  }
+
+  if (user.uid !== ADMIN_UID) {
+    await signOut(auth);
+    loginMessage.textContent = "운영자 계정만 접근할 수 있습니다.";
+    return;
+  }
+
+  try {
+    const adminCheck = await getDoc(doc(db, "counters", "main"));
+
+    if (!adminCheck.exists()) {
+      throw new Error("운영자 권한을 확인할 수 없습니다.");
+    }
+
+    isAdmin = true;
+    loginPanel.style.display = "none";
+    dashboard.style.display = "block";
+
+    startDashboardListeners();
+
+  } catch (error) {
+    console.error(error);
+    await signOut(auth);
+    loginMessage.textContent =
+      "운영자 인증에 실패했습니다. Firebase 규칙을 확인해 주세요.";
+  }
+});
+
+async function changeRecruitment(value) {
+  if (!isAdmin) return;
+
+  openButton.disabled = true;
+  closeButton.disabled = true;
+
+  try {
+    await updateDoc(doc(db, "settings", "main"), {
+      accepting: value,
+      updatedAt: serverTimestamp()
+    });
+
+    showMessage(
+      value
+        ? "상담 모집을 시작했습니다."
+        : "상담 모집을 종료했습니다."
+    );
+
+  } catch (error) {
+    console.error(error);
+    showMessage("모집 상태 변경에 실패했습니다: " + error.message);
+  }
+}
+
+openButton.addEventListener("click", () => {
+  if (!accepting) changeRecruitment(true);
+});
+
+closeButton.addEventListener("click", () => {
+  if (accepting) changeRecruitment(false);
+});
+
+logoutButton.addEventListener("click", async () => {
+  stopListeners();
+  await signOut(auth);
+});
+
 function updateTheme() {
   const hour = new Date().getHours();
-  document.body.classList.toggle("dark",hour >= 19 || hour < 7);
+  document.body.classList.toggle("dark", hour >= 19 || hour < 7);
 }
+
 updateTheme();
-setInterval(updateTheme,60000);
+setInterval(updateTheme, 60000);
 </script>
 </body>
 </html>

@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADMIN — AM 02:17</title>
+<style>
+:root {
+  --bg:#f5f3ee;
+  --panel:#eeece5;
+  --text:#252522;
+  --muted:#89877f;
+  --line:#dedbd3;
+  --accent:#b58a51;
+}
+* {box-sizing:border-box;margin:0;padding:0}
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,"Noto Sans KR",sans-serif;
+}
+body.dark {
+  --bg:#171816;
+  --panel:#22231f;
+  --text:#eeece5;
+  --muted:#929087;
+  --line:#34352f;
+  --accent:#c39a60;
+}
+.page {min-height:100vh;padding:35px 6%}
+header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding-bottom:28px;
+  border-bottom:1px solid var(--line);
+}
+.logo {font-size:19px;font-weight:600;letter-spacing:2px}
+.tag {font-size:10px;color:var(--muted);letter-spacing:2px}
+main {max-width:1100px;margin:55px auto}
+.eyebrow {
+  color:var(--accent);
+  font-size:10px;
+  letter-spacing:3px;
+  margin-bottom:15px;
+}
+h1 {font-size:32px;font-weight:400;margin-bottom:10px}
+.subtitle {font-size:12px;color:var(--muted)}
+.stats {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
+  margin:35px 0;
+}
+.card {
+  background:var(--panel);
+  padding:23px;
+  border:1px solid var(--line);
+}
+.card-label {font-size:11px;color:var(--muted)}
+.card-value {font-size:27px;margin-top:13px}
+.section {
+  border-top:1px solid var(--line);
+  padding:27px 0;
+}
+.section-title {
+  font-size:14px;
+  font-weight:500;
+  margin-bottom:20px;
+}
+.status-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+}
+.status {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  font-size:12px;
+}
+.dot {
+  width:7px;height:7px;border-radius:50%;
+  background:var(--muted);
+}
+.actions {display:flex;gap:9px;flex-wrap:wrap}
+button {
+  padding:12px 17px;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--text);
+  font-size:11px;
+  cursor:not-allowed;
+  opacity:.65;
+}
+button.primary {
+  background:var(--text);
+  color:var(--bg);
+  border-color:var(--text);
+}
+button:disabled {cursor:not-allowed}
+.notice {
+  padding:15px;
+  background:var(--panel);
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.8;
+}
+.empty {
+  padding:28px 15px;
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+  border:1px dashed var(--line);
+}
+.queue-item {
+  display:flex;
+  justify-content:space-between;
+  padding:16px 0;
+  border-bottom:1px solid var(--line);
+  font-size:12px;
+}
+.queue-item span:last-child {color:var(--muted)}
+footer {
+  margin-top:65px;
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:1px;
+}
+@media(max-width:650px) {
+  .page {padding:25px 20px}
+  .stats {grid-template-columns:1fr}
+  .status-row {align-items:flex-start;flex-direction:column}
+  h1 {font-size:27px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="logo">AM 02:17</div>
+  <div class="tag">ADMINISTRATION</div>
+</header>
+
+<main>
+  <div class="eyebrow">PRIVATE MANAGEMENT</div>
+  <h1>운영자 대시보드</h1>
+  <p class="subtitle">AM 02:17 상담 관리 시스템</p>
+
+  <div class="stats">
+    <div class="card">
+      <div class="card-label">완료된 상담</div>
+      <div class="card-value">NO.000</div>
+    </div>
+    <div class="card">
+      <div class="card-label">현재 대기자</div>
+      <div class="card-value">0명</div>
+    </div>
+    <div class="card">
+      <div class="card-label">보관된 상담</div>
+      <div class="card-value">0 / 2</div>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="section-title">01 / 상담 모집 관리</div>
+    <div class="status-row">
+      <div class="status">
+        <span class="dot"></span>
+        상담 모집 종료
+      </div>
+      <div class="actions">
+        <button class="primary" disabled>상담 모집 시작</button>
+        <button disabled>모집 종료</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">02 / 현재 상담</div>
+    <div class="notice">
+      현재 진행 중인 상담이 없습니다.
+    </div>
+    <div class="actions" style="margin-top:15px">
+      <button disabled>상담 완료</button>
+      <button disabled>이용자 내보내기</button>
+      <button disabled>상담 일시정지</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">03 / 상담 대기열</div>
+    <div class="empty">현재 대기자가 없습니다.</div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">04 / 보관된 상담</div>
+    <div class="empty">보관된 상담이 없습니다.</div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">05 / 상담 관리 안내</div>
+    <div class="notice">
+      · 상담 완료 버튼을 눌러야 완료 건수가 증가합니다.<br>
+      · 완료된 상담의 채팅 기록은 삭제됩니다.<br>
+      · 보관된 상담은 최대 2건까지 유지됩니다.<br>
+      · 보관 상담은 진행 중인 상담 종료 후 순서대로 재개됩니다.<br>
+      · 관리자 인증 및 실제 데이터 연결은 Firebase 설정 단계에서 구현합니다.
+    </div>
+  </section>
+
+  <footer>AM 02:17 © 2026 — ADMIN ONLY</footer>
+</main>
+</div>
+
+<script>
+function updateTheme() {
+  const hour = new Date().getHours();
+  document.body.classList.toggle("dark",hour >= 19 || hour < 7);
+}
+updateTheme();
+setInterval(updateTheme,60000);
+</script>
+</body>
+</html>

@@ -112,6 +112,11 @@
       border-color: var(--accent);
     }
 
+    input:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
     .hint {
       margin-top: 10px;
       margin-bottom: 36px;
@@ -146,13 +151,19 @@
       color: var(--muted);
       font-size: 12px;
       margin-bottom: 20px;
+      line-height: 1.7;
     }
 
     .dot {
+      flex-shrink: 0;
       width: 7px;
       height: 7px;
       border-radius: 50%;
       background: var(--muted);
+    }
+
+    .dot.open {
+      background: #72966b;
     }
 
     button {
@@ -165,6 +176,16 @@
       letter-spacing: 1px;
       cursor: not-allowed;
       opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    button.active {
+      cursor: pointer;
+      opacity: 1;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
     }
 
     .footnote {
@@ -228,7 +249,7 @@
         autocomplete="off"
       >
 
-      <p class="hint">
+      <p class="hint" id="hint">
         입력하지 않으면 임의의 닉네임이 생성됩니다.
       </p>
 
@@ -244,21 +265,279 @@
       </section>
 
       <div class="status">
-        <span class="dot"></span>
-        <span>현재 상담 모집이 종료되었습니다.</span>
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">상담 모집 상태를 확인하고 있습니다.</span>
       </div>
 
-      <button type="button" disabled>
-        상담 신청은 현재 준비 중입니다
+      <button type="button" id="applyButton" disabled>
+        연결 중입니다
       </button>
 
-      <p class="footnote">
+      <p class="footnote" id="footnote">
         상담 모집이 시작되면 신청할 수 있습니다.
       </p>
     </main>
 
     <footer>AM 02:17 © 2026</footer>
   </div>
+
+  <script type="module">
+    import {
+      auth,
+      db,
+      signInAnonymously
+    } from "./firebase.js";
+
+    import {
+      doc,
+      getDoc,
+      onSnapshot,
+      writeBatch,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    const nicknameInput = document.getElementById("nickname");
+    const applyButton = document.getElementById("applyButton");
+    const statusText = document.getElementById("statusText");
+    const statusDot = document.getElementById("statusDot");
+    const hint = document.getElementById("hint");
+    const footnote = document.getElementById("footnote");
+
+    let currentUser = null;
+    let accepting = false;
+    let applied = false;
+    let blocked = false;
+    let submitting = false;
+
+    function setStatus(message, isOpen = false) {
+      statusText.textContent = message;
+      statusDot.classList.toggle("open", isOpen);
+    }
+
+    function setButton(enabled, text) {
+      applyButton.disabled = !enabled;
+      applyButton.textContent = text;
+      applyButton.classList.toggle("active", enabled);
+    }
+
+    function refreshButton() {
+      if (blocked) {
+        setButton(false, "신청할 수 없습니다");
+      } else if (applied) {
+        setButton(false, "신청이 접수되었습니다");
+      } else if (submitting) {
+        setButton(false, "신청을 처리하고 있습니다");
+      } else if (accepting) {
+        setButton(true, "상담 신청하기");
+      } else {
+        setButton(false, "상담 모집이 종료되었습니다");
+      }
+    }
+
+    function makeNickname() {
+      return "새벽" + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    function showError(message) {
+      footnote.textContent = message;
+    }
+
+    async function initialize() {
+      try {
+        if (!auth.currentUser) {
+          await signInAnonymously(auth);
+        }
+
+        currentUser = auth.currentUser;
+
+        if (!currentUser) {
+          throw new Error("로그인 정보를 확인할 수 없습니다.");
+        }
+
+        // 차단 여부 확인
+        const blockedRef = doc(db, "blockedUsers", currentUser.uid);
+        const blockedSnap = await getDoc(blockedRef);
+
+        if (blockedSnap.exists()) {
+          blocked = true;
+          setStatus("이 계정은 서비스 이용이 제한되어 있습니다.");
+          hint.textContent = "서비스 이용이 제한된 계정입니다.";
+          nicknameInput.disabled = true;
+          refreshButton();
+          showError("운영자에게 문의해 주세요.");
+          return;
+        }
+
+        // 이전에 신청한 닉네임이 이 브라우저에 저장되어 있으면 복원
+        const savedNickname = localStorage.getItem(
+          "am0217_nickname_" + currentUser.uid
+        );
+
+        if (savedNickname) {
+          nicknameInput.value = savedNickname;
+        }
+
+        // 모집 상태 실시간 감시
+        const settingsRef = doc(db, "settings", "main");
+
+        onSnapshot(settingsRef, (snapshot) => {
+          if (!snapshot.exists()) {
+            accepting = false;
+            setStatus("상담 모집 상태를 확인할 수 없습니다.");
+            refreshButton();
+            return;
+          }
+
+          accepting = snapshot.data().accepting === true;
+
+          if (accepting) {
+            setStatus("현재 상담 신청을 받고 있습니다.", true);
+            footnote.textContent = "신청 후 대기 순서에 따라 안내됩니다.";
+          } else {
+            setStatus("현재 상담 모집이 종료되었습니다.");
+            footnote.textContent = "상담 모집이 시작되면 신청할 수 있습니다.";
+          }
+
+          refreshButton();
+        }, (error) => {
+          console.error(error);
+          accepting = false;
+          setStatus("모집 상태를 불러오지 못했습니다.");
+          refreshButton();
+        });
+
+      } catch (error) {
+        console.error(error);
+        setStatus("서비스에 연결하지 못했습니다.");
+        setButton(false, "연결 오류");
+        showError("페이지를 새로고침한 뒤 다시 시도해 주세요.");
+      }
+    }
+
+    async function findNickname() {
+      let nickname = nicknameInput.value.trim().toLowerCase();
+
+      if (!nickname) {
+        // 자동 닉네임은 사용 가능한 이름이 나올 때까지 새로 생성
+        for (let i = 0; i < 20; i++) {
+          const candidate = makeNickname();
+          const candidateRef = doc(db, "nicknames", candidate);
+
+          try {
+            const candidateSnap = await getDoc(candidateRef);
+
+            if (!candidateSnap.exists()) {
+              nickname = candidate;
+              nicknameInput.value = nickname;
+              break;
+            }
+          } catch (error) {
+            if (error.code === "permission-denied") {
+              continue;
+            }
+            throw error;
+          }
+        }
+
+        if (!nickname) {
+          throw new Error("자동 닉네임을 만들지 못했습니다. 직접 입력해 주세요.");
+        }
+      }
+
+      if (!/^[가-힣a-z0-9_]{1,12}$/.test(nickname)) {
+        throw new Error("닉네임은 한글, 영문 소문자, 숫자, 밑줄만 사용할 수 있습니다. (최대 12자)");
+      }
+
+      nicknameInput.value = nickname;
+
+      return nickname;
+    }
+
+    async function apply() {
+      if (!currentUser || !accepting || submitting || applied || blocked) {
+        return;
+      }
+
+      submitting = true;
+      refreshButton();
+      showError("");
+
+      try {
+        const nickname = await findNickname();
+
+        const nicknameRef = doc(db, "nicknames", nickname);
+        const nicknameSnap = await getDoc(nicknameRef);
+
+        if (
+          nicknameSnap.exists() &&
+          nicknameSnap.data().uid !== currentUser.uid
+        ) {
+          throw new Error("이미 사용 중인 닉네임입니다. 다른 이름을 입력해 주세요.");
+        }
+
+        // 모집이 진행 중인지 신청 직전에 다시 확인
+        const settingsSnap = await getDoc(doc(db, "settings", "main"));
+
+        if (!settingsSnap.exists() || settingsSnap.data().accepting !== true) {
+          accepting = false;
+          setStatus("상담 모집이 종료되었습니다.");
+          throw new Error("모집이 종료되어 신청할 수 없습니다.");
+        }
+
+        // 닉네임 예약과 대기열 등록을 한 번에 처리
+        const batch = writeBatch(db);
+
+        batch.set(nicknameRef, {
+          uid: currentUser.uid,
+          nickname: nickname,
+          createdAt: nicknameSnap.exists()
+            ? nicknameSnap.data().createdAt
+            : serverTimestamp()
+        });
+
+        const queueRef = doc(db, "queue", currentUser.uid);
+
+        batch.set(queueRef, {
+          uid: currentUser.uid,
+          nickname: nickname,
+          nicknameKey: nickname,
+          status: "waiting",
+          createdAt: serverTimestamp()
+        });
+
+        await batch.commit();
+
+        applied = true;
+        nicknameInput.disabled = true;
+
+        localStorage.setItem(
+          "am0217_nickname_" + currentUser.uid,
+          nickname
+        );
+
+        hint.textContent = "신청이 접수되어 닉네임을 변경할 수 없습니다.";
+        setStatus("상담 신청이 접수되었습니다. 대기해 주세요.");
+        footnote.textContent = "운영자가 순서에 따라 상담을 시작합니다.";
+
+      } catch (error) {
+        console.error(error);
+
+        if (error.code === "permission-denied") {
+          showError("이미 신청했거나 닉네임을 사용할 수 없습니다. 다른 닉네임으로 시도해 주세요.");
+        } else {
+          showError(error.message || "신청 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+        }
+
+      } finally {
+        submitting = false;
+        refreshButton();
+      }
+    }
+
+    applyButton.addEventListener("click", apply);
+
+    initialize();
+  </script>
 
   <script>
     function updateTheme() {
